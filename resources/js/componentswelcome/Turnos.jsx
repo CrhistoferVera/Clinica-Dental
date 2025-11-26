@@ -26,7 +26,7 @@ export default function Turnos() {
     return (
         <div className="mt-1 p-4 bg-white w-full">
 
-            <h3 className="text-lg font-semibold mb-4 capitalize border-b pb-2">
+            <h3 className="text-lg font-semibold mb-4 capitalize border-b-2 border-black md:pb-3">
                 {seleccion}:
             </h3>
 

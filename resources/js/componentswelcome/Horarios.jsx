@@ -1,7 +1,7 @@
 // Horarios.jsx
 export default function Horarios({ horarios }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:mt-7 mt-6 border-t pt-5">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:mt-5 mt-6 border-t-2 border-black md:pt-3">
       {horarios.map((hora, idx) => (
         <button
           key={idx}

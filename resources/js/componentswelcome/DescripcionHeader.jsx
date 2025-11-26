@@ -2,11 +2,13 @@ import { MapPin, Mail, MessageCircle } from "lucide-react";
 
 export default function DescripcionHeader() {
     return (
-        <div className="flex md:items-center justify-between border-b pb-4 mb-4">
+        <div className="flex  md:items-center justify-between border-b-2 border-black md:pb-3">
             
-            <h2 className="text-2xl font-semibold mb-2">Barbería</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-2 md:mb-0">
+                Barbería
+            </h2>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 ">
 
                 <div className="flex items-center gap-1">
                     <MapPin className="w-5 h-5 text-black" />

@@ -1,6 +1,6 @@
 export default function DescripcionMobile({ expanded, setExpanded }) {
     return (
-        <div className="md:hidden text-sm text-gray-700 border-b pb-3 ">
+        <div className="md:hidden text-sm text-gray-700 border-b-[3.6px] pb-3 ">
 
             {expanded ? (
                 <>
