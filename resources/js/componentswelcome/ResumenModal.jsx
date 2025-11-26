@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 import { Transition } from "@headlessui/react";
 import { ArrowLeft } from "lucide-react";
+import InputField from "./InputField";
 
 export default function ResumenModal({ mostrar, onClose, servicio, fecha, hora }) {
   const [form, setForm] = useState({
@@ -12,19 +13,41 @@ export default function ResumenModal({ mostrar, onClose, servicio, fecha, hora }
     metodoPago: "Efectivo",
   });
 
+  const [error, setError] = useState("");
+
+ // Validaciones
+const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+
+
+  const soloNumeros = (val) => val.replace(/[^0-9]/g, "");
+
+  const correoValido = (val) => val.replace(/\s/g, ""); // sin espacios
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
+  const validarFormulario = () => {
+    if (!form.nombre) return "Ingrese su nombre";
+    if (!form.apellido) return "Ingrese su apellido";
+    if (!form.dni) return "Ingrese su DNI / CI";
+    if (!form.telefono) return "Ingrese su teléfono";
+    if (!form.correo) return "Ingrese su correo";
+    if (!form.correo.includes("@")) return "Correo inválido";
+    return "";
+  };
+
   const handleFinalizar = () => {
-    const resumen = {
-      servicio,
-      fecha,
-      hora,
-      ...form
-    };
+    const mensajeError = validarFormulario();
+    if (mensajeError) {
+      setError(mensajeError);
+      return; // No enviar si hay error
+    }
+
+    const resumen = { servicio, fecha, hora, ...form };
     console.log("Resumen de la cita:", resumen);
+    setError("");
     onClose();
   };
 
@@ -40,11 +63,7 @@ export default function ResumenModal({ mostrar, onClose, servicio, fecha, hora }
         leaveFrom="opacity-50"
         leaveTo="opacity-0"
       >
-        <div
-          onClick={onClose}
-          className="fixed inset-0 bg-black z-40"
-          style={{ opacity: 0.5 }}
-        />
+        <div onClick={onClose} className="fixed inset-0 bg-black z-40" style={{ opacity: 0.5 }} />
       </Transition.Child>
 
       {/* Panel */}
@@ -58,7 +77,7 @@ export default function ResumenModal({ mostrar, onClose, servicio, fecha, hora }
         leaveTo="translate-x-full"
       >
         <div className="fixed top-0 right-0 h-full z-50 bg-white shadow-lg w-full md:w-96 flex flex-col overflow-auto">
-          
+
           {/* Cabecera */}
           <div className="bg-black text-white flex items-center p-4">
             <button onClick={onClose} className="mr-4">
@@ -78,59 +97,34 @@ export default function ResumenModal({ mostrar, onClose, servicio, fecha, hora }
 
             {/* Formulario */}
             <div className="flex flex-col gap-3">
-              <input
-                type="text"
-                name="nombre"
-                placeholder="Nombre"
-                value={form.nombre}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              <input
-                type="text"
-                name="apellido"
-                placeholder="Apellido"
-                value={form.apellido}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              <input
-                type="text"
-                name="dni"
-                placeholder="DNI / CI"
-                value={form.dni}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              <input
-                type="text"
-                name="telefono"
-                placeholder="Teléfono / WhatsApp"
-                value={form.telefono}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-              />
-              <input
-                type="email"
-                name="correo"
-                placeholder="Correo"
-                value={form.correo}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-              />
+              <InputField label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} validation={soloLetras} maxLength={30} />
+              <InputField label="Apellido" name="apellido" value={form.apellido} onChange={handleChange} validation={soloLetras} maxLength={30} />
+              <InputField label="DNI / CI" name="dni" value={form.dni} onChange={handleChange} validation={soloNumeros} maxLength={15} />
+              <InputField label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} validation={soloNumeros} maxLength={15} />
+              <InputField label="Correo" name="correo" value={form.correo} onChange={handleChange} type="email" validation={correoValido} maxLength={50} />
 
-              <select
-                name="metodoPago"
-                value={form.metodoPago}
-                onChange={handleChange}
-                className="border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-              >
-                <option>Efectivo</option>
-                <option>Transferencia Bancaria</option>
-                <option>QR</option>
-              </select>
+              <div className="relative w-full">
+                <select
+                  name="metodoPago"
+                  value={form.metodoPago}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black"
+                >
+                  <option>Efectivo</option>
+                  <option>Transferencia Bancaria</option>
+                  <option>QR</option>
+                </select>
+                <label className="absolute left-3 -top-2 text-gray-500 bg-white px-1 text-sm">Método de pago</label>
+              </div>
             </div>
           </div>
+
+          {/* Mensaje de error */}
+          {error && (
+            <div className="p-4 bg-red-100 text-red-700 font-semibold rounded-lg mx-6 -mt-2 mb-2">
+              {error}
+            </div>
+          )}
 
           {/* Botón finalizar */}
           <div className="p-6 border-t">
