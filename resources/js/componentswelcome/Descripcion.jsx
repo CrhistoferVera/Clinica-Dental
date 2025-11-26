@@ -1,7 +1,7 @@
 import { useState } from "react";
-import DescripcionHeader from "./DescripcionHeader";
-import DescripcionDesktop from "./DescripcionDesktop";
-import DescripcionMobile from "./DescripcionMobile";
+import DescripcionHeader from "./Descripcion/DescripcionHeader";
+import DescripcionDesktop from "./Descripcion/DescripcionDesktop";
+import DescripcionMobile from "./Descripcion/DescripcionMobile";
 
 export default function Descripcion() {
 

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import DiasCarousel from "./DiasCarousel";
-import Horarios from "./Horarios";
-import AgendarButton from "./AgendarButton";
-import ResumenModal from "./ResumenModal";
+import DiasCarousel from "./Turnos/DiasCarousel";
+import Horarios from "./Turnos/Horarios";
+import AgendarButton from "./Turnos/AgendarButton";
+import ResumenModal from "./Turnos/ResumenModal";
 
 export default function Turnos() {
+  
   const dias = [
-    "martes 25 noviembre", "miércoles 26 noviembre", "jueves 27 noviembre", "viernes 28 noviembre",
+    "miércoles 26 noviembre", "jueves 27 noviembre", "viernes 28 noviembre",
     "sábado 29 noviembre", "domingo 30 noviembre", "lunes 1 diciembre", "martes 2 diciembre",
     "miércoles 3 diciembre", "jueves 4 diciembre", "viernes 5 diciembre", "sábado 6 diciembre",
     "domingo 7 diciembre", "lunes 8 diciembre", "martes 9 diciembre", "miércoles 10 diciembre",
