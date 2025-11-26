@@ -41,7 +41,7 @@ export default function DiasCarousel({ dias, seleccion, setSeleccion }) {
                                 transition-all duration-150
                                 ${activo
                                     ? "bg-black text-white border-black"
-                                    : "bg-gray-500 text-white hover:bg-black"
+                                    : "bg-white text-black hover:bg-gray-100 border-gray-300"
                                 }
                             `}
                         >
