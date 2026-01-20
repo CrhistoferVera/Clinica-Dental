@@ -21,5 +21,11 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Seeders de la clínica dental
+        $this->call([
+            BusinessHoursSeeder::class,
+            DayExceptionsSeeder::class,
+        ]);
     }
 }

@@ -13,20 +13,15 @@ class AvailableHoursController extends Controller
    public function index(Request $request)
    {
        $date = $request->query('date');
-       $service_id = $request->query('service_id', 1);
 
        $dayOfWeek = Carbon::parse($date)->dayOfWeek;
 
        // Buscar excepción
-       $exception = DayException::where('date', $date)
-                       ->where('service_id', $service_id)
-                       ->first();
+       $exception = DayException::where('date', $date)->first();
 
        if ($exception?->is_closed) return response()->json([]);
 
-       $hours = $exception ?? BusinessHour::where('day_of_week', $dayOfWeek)
-                   ->where('service_id', $service_id)
-                   ->first();
+       $hours = $exception ?? BusinessHour::where('day_of_week', $dayOfWeek)->first();
 
        if (!$hours || $hours->duration_minutes == 0) return response()->json([]);
 
@@ -42,7 +37,6 @@ class AvailableHoursController extends Controller
 
        // Quitar citas ocupadas
        $ocupadas = Appointment::where('date', $date)
-                   ->where('service_id', $service_id)
                    ->pluck('time_start')
                    ->toArray();
 
