@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('day_exceptions', function (Blueprint $table) {
             $table->id();
+            $table->date('date')->unique();
+            $table->boolean('is_closed')->default(false); // true si está cerrado ese día
+            $table->time('start_time')->nullable(); // Si tiene horario especial
+            $table->time('end_time')->nullable();
+            $table->integer('duration_minutes')->default(30);
             $table->timestamps();
         });
     }
