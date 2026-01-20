@@ -1,9 +1,13 @@
 import { Fragment, useState } from "react";
 import { Transition } from "@headlessui/react";
 import { ArrowLeft } from "lucide-react";
+import { usePage } from '@inertiajs/react';
 import InputField from "./InputField";
 
-export default function ResumenModal({ mostrar, onClose, servicio, fecha, hora }) {
+export default function ResumenModal({ mostrar, onClose, servicio, fechaLabel, fechaValue, hora }) {
+  const { props } = usePage();
+  const csrfTokenFromProps = props.csrf_token;
+
   const [form, setForm] = useState({
     nombre: "",
     apellido: "",
@@ -14,6 +18,8 @@ export default function ResumenModal({ mostrar, onClose, servicio, fecha, hora }
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
  // Validaciones
 const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
@@ -38,17 +44,97 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
     return "";
   };
 
-  const handleFinalizar = () => {
+  const handleFinalizar = async () => {
     const mensajeError = validarFormulario();
     if (mensajeError) {
       setError(mensajeError);
-      return; // No enviar si hay error
+      return;
     }
 
-    const resumen = { servicio, fecha, hora, ...form };
-    console.log("Resumen de la cita:", resumen);
+    setLoading(true);
     setError("");
-    onClose();
+
+    try {
+      // Usar directamente fechaValue que ya viene en formato YYYY-MM-DD
+      const fechaFormateada = fechaValue;
+
+      // Extraer hora de inicio y fin del formato "HH:MM - HH:MM"
+      const [horaInicio, horaFin] = hora.split(" - ");
+
+      // Obtener token CSRF de Inertia props o del meta tag
+      const csrfToken = csrfTokenFromProps || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+      if (!csrfToken) {
+        throw new Error('Token CSRF no encontrado. Por favor recarga la página.');
+      }
+
+      console.log('Datos a enviar:', {
+        fecha: fechaFormateada,
+        horaInicio,
+        horaFin,
+        csrfToken: csrfToken.substring(0, 10) + '...'
+      }); // Debug
+
+      const response = await fetch('/appointments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          patient_name: form.nombre,
+          patient_lastname: form.apellido,
+          patient_dni: form.dni,
+          patient_phone: form.telefono,
+          patient_email: form.correo,
+          payment_method: form.metodoPago,
+          date: fechaFormateada,
+          time_start: horaInicio,
+          time_end: horaFin,
+        })
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        if (response.status === 419) {
+          throw new Error('La sesión ha expirado. Por favor recarga la página.');
+        }
+        throw new Error('Error al procesar la respuesta del servidor.');
+      }
+
+      if (!response.ok) {
+        // Manejar errores de validación (422)
+        if (response.status === 422 && data.errors) {
+          const errores = Object.values(data.errors).flat();
+          throw new Error(errores.join(', '));
+        }
+        throw new Error(data.message || 'Error al crear la cita');
+      }
+
+      setSuccess(true);
+      setTimeout(() => {
+        setForm({
+          nombre: "",
+          apellido: "",
+          dni: "",
+          telefono: "",
+          correo: "",
+          metodoPago: "Efectivo",
+        });
+        setSuccess(false);
+        onClose();
+        // Opcional: Recargar horarios disponibles
+        window.location.reload();
+      }, 2000);
+
+    } catch (err) {
+      setError(err.message || 'Error al crear la cita. Intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -91,7 +177,7 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
             {/* Resumen */}
             <div className="bg-gray-100 p-4 rounded-lg">
               <p><strong>Servicio:</strong> {servicio}</p>
-              <p><strong>Fecha:</strong> {fecha}</p>
+              <p><strong>Fecha:</strong> {fechaLabel}</p>
               <p><strong>Hora:</strong> {hora}</p>
             </div>
 
@@ -126,13 +212,21 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
             </div>
           )}
 
+          {/* Mensaje de éxito */}
+          {success && (
+            <div className="p-4 bg-green-100 text-green-700 font-semibold rounded-lg mx-6 -mt-2 mb-2">
+              ¡Cita agendada exitosamente!
+            </div>
+          )}
+
           {/* Botón finalizar */}
           <div className="p-6 border-t">
             <button
               onClick={handleFinalizar}
-              className="w-full bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors"
+              disabled={loading || success}
+              className="w-full bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Finalizar
+              {loading ? 'Guardando...' : success ? '¡Listo!' : 'Finalizar'}
             </button>
           </div>
         </div>
