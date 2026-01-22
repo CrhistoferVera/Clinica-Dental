@@ -25,7 +25,7 @@ class Appointment extends Model
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
     ];
 
     // Relación con usuario (si está autenticado)

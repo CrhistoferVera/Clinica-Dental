@@ -15,18 +15,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seeders de la clínica dental (roles primero)
+        $this->call([
+            RolesSeeder::class,
+            BusinessHoursSeeder::class,
+            DayExceptionsSeeder::class,
+        ]);
 
-        User::factory()->create([
+        // Crear usuario de prueba con rol admin
+        $user = User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
-
-        // Seeders de la clínica dental
-        $this->call([
-            BusinessHoursSeeder::class,
-            DayExceptionsSeeder::class,
-            RolesSeeder::class,
-        ]);
+        $user->assignRole('admin');
     }
 }

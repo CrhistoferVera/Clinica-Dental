@@ -61,7 +61,17 @@ export default function ListaCitas() {
     }, {});
 
     const formatearFecha = (fechaStr) => {
-        const fecha = new Date(fechaStr + 'T00:00:00');
+        if (!fechaStr) return 'Fecha no disponible';
+
+        // Asegurar formato YYYY-MM-DD
+        const partes = fechaStr.split('T')[0].split('-');
+        if (partes.length !== 3) return fechaStr;
+
+        const [year, month, day] = partes.map(Number);
+        const fecha = new Date(year, month - 1, day);
+
+        if (isNaN(fecha.getTime())) return fechaStr;
+
         const opciones = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
         return fecha.toLocaleDateString('es-ES', opciones);
     };
