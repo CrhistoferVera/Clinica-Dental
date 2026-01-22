@@ -9,9 +9,5 @@ class DayException extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['date', 'is_closed', 'start_time', 'end_time', 'service_id', 'notes'];
-
-    public function service() {
-        return $this->belongsTo(Service::class);
-    }
+    protected $fillable = ['date', 'is_closed', 'start_time', 'end_time', 'duration_minutes', 'notes'];
 }

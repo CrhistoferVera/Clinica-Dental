@@ -1,3 +1,5 @@
+import { Link } from '@inertiajs/react';
+
 // resources/js/Components/Header.jsx
 export default function Header() {
     return (
@@ -7,6 +9,14 @@ export default function Header() {
                 backgroundImage: "url('https://res.cloudinary.com/dnbklbswg/image/upload/v1764120370/fondo1-1_zfg4na.jpg')"
             }}
         >
+            <div className="absolute top-4 right-4">
+                <Link
+                    href="/login"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors bg-white/80"
+                >
+                    Iniciar sesión
+                </Link>
+            </div>
             {/* Logo circular */}
             <div className="absolute top-full transform -translate-y-1/2 bg-black rounded-full p-4  border-4 border-white">
                 <img

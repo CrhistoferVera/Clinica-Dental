@@ -30,6 +30,30 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    href={route('gestion-citas')}
+                                    active={route().current('gestion-citas')}
+                                >
+                                    Gestión de Citas
+                                </NavLink>
+                                <NavLink
+                                    href={route('gestion-pacientes')}
+                                    active={route().current('gestion-pacientes')}
+                                >
+                                    Pacientes
+                                </NavLink>
+                                <NavLink
+                                    href={route('historia-clinica')}
+                                    active={route().current('historia-clinica')}
+                                >
+                                    Historia Clínica
+                                </NavLink>
+                                <NavLink
+                                    href={route('recetas')}
+                                    active={route().current('recetas')}
+                                >
+                                    Recetas
+                                </NavLink>
                             </div>
                         </div>
 
@@ -134,6 +158,30 @@ export default function AuthenticatedLayout({ header, children }) {
                         >
                             Dashboard
                         </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('gestion-citas')}
+                            active={route().current('gestion-citas')}
+                        >
+                            Gestión de Citas
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('gestion-pacientes')}
+                            active={route().current('gestion-pacientes')}
+                        >
+                            Pacientes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('historia-clinica')}
+                            active={route().current('historia-clinica')}
+                        >
+                            Historia Clínica
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('recetas')}
+                            active={route().current('recetas')}
+                        >
+                            Recetas
+                        </ResponsiveNavLink>
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
@@ -174,3 +222,4 @@ export default function AuthenticatedLayout({ header, children }) {
         </div>
     );
 }
+

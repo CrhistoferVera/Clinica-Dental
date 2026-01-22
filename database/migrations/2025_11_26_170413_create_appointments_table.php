@@ -13,6 +13,18 @@ return new class extends Migration
     {
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->string('patient_name');
+            $table->string('patient_lastname');
+            $table->string('patient_dni');
+            $table->string('patient_phone');
+            $table->string('patient_email');
+            $table->string('payment_method')->default('Efectivo');
+            $table->date('date');
+            $table->time('time_start');
+            $table->time('time_end');
+            $table->enum('status', ['programada', 'confirmada', 'atendida', 'no_asistio', 'cancelada'])->default('programada');
+            $table->text('notes')->nullable();
             $table->timestamps();
         });
     }

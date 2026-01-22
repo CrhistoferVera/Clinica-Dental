@@ -25,7 +25,7 @@ export default function Turnos() {
     // 2️⃣ Obtener horarios al cambiar día
     useEffect(() => {
         if (!seleccionDia) return;
-        fetch(`/available-hours?date=${seleccionDia}&service_id=1`)
+        fetch(`/available-hours?date=${seleccionDia}`)
             .then(res => res.json())
             .then(data => {
                 setHorarios(data);
@@ -62,8 +62,9 @@ export default function Turnos() {
             <ResumenModal
                 mostrar={mostrarModal}
                 onClose={() => setMostrarModal(false)}
-                servicio="Barbería"
-                fecha={dias.find(d => d.value === seleccionDia)?.label || ""}
+                servicio="Clínica Dental"
+                fechaLabel={dias.find(d => d.value === seleccionDia)?.label || ""}
+                fechaValue={seleccionDia}
                 hora={seleccionHora}
             />
         </div>
