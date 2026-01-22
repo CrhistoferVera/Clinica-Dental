@@ -35,16 +35,22 @@ class AvailableHoursController extends Controller
            $start->addMinutes($hours->duration_minutes);
        }
 
-       // Quitar citas ocupadas
+       // Obtener citas ocupadas (excluyendo canceladas)
        $ocupadas = Appointment::where('date', $date)
+                   ->whereNotIn('status', ['cancelada'])
                    ->pluck('time_start')
+                   ->map(fn($t) => Carbon::parse($t)->format('H:i'))
                    ->toArray();
 
-       $disponibles = array_filter($slots, function($slot) use ($ocupadas) {
+       // Devolver todos los slots con estado de disponibilidad
+       $slotsConEstado = array_map(function($slot) use ($ocupadas) {
            $hora = explode(' - ', $slot)[0];
-           return !in_array($hora, $ocupadas);
-       });
+           return [
+               'horario' => $slot,
+               'ocupado' => in_array($hora, $ocupadas)
+           ];
+       }, $slots);
 
-       return response()->json(array_values($disponibles));
+       return response()->json($slotsConEstado);
    }
 }
