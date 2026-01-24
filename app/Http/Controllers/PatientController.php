@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Patient;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class PatientController extends Controller
 {
@@ -33,22 +37,51 @@ class PatientController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
-            'ci' => 'required|string|max:20|unique:patients,ci',
+            'ci' => 'required|string|max:20|unique:patients,ci|unique:users,ci',
             'telefono' => 'required|string|max:20',
-            'email' => 'nullable|email|max:100',
+            'email' => 'required|email|max:100|unique:users,email',
             'fecha_nacimiento' => 'nullable|date',
             'alergias' => 'nullable|string',
             'antecedentes' => 'nullable|string',
             'observaciones' => 'nullable|string',
         ]);
 
-        $validated['created_by'] = auth()->id();
+        // Generar contraseña aleatoria
+        $password = Str::random(8);
 
-        $patient = Patient::create($validated);
+        $result = DB::transaction(function () use ($validated, $password) {
+            // Crear el usuario
+            $user = User::create([
+                'name' => $validated['nombre'],
+                'apellido' => $validated['apellido'],
+                'ci' => $validated['ci'],
+                'telefono' => $validated['telefono'],
+                'email' => $validated['email'],
+                'password' => Hash::make($password),
+            ]);
+
+            // Asignar rol de paciente
+            $user->assignRole('paciente');
+
+            // Crear el paciente vinculado al usuario
+            $validated['user_id'] = $user->id;
+            $validated['created_by'] = auth()->id();
+
+            $patient = Patient::create($validated);
+
+            return [
+                'user' => $user,
+                'patient' => $patient,
+            ];
+        });
 
         return response()->json([
             'message' => 'Paciente creado exitosamente',
-            'patient' => $patient
+            'patient' => $result['patient'],
+            'credentials' => [
+                'email' => $validated['email'],
+                'password' => $password,
+            ]
         ], 201);
     }
 
