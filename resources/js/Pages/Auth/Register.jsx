@@ -8,6 +8,9 @@ import { Head, Link, useForm } from '@inertiajs/react';
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
+        apellido: '',
+        ci: '',
+        telefono: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -23,18 +26,18 @@ export default function Register() {
 
     return (
         <GuestLayout>
-            <Head title="Register" />
+            <Head title="Registro" />
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value="Nombres" />
 
                     <TextInput
                         id="name"
                         name="name"
                         value={data.name}
                         className="mt-1 block w-full"
-                        autoComplete="name"
+                        autoComplete="given-name"
                         isFocused={true}
                         onChange={(e) => setData('name', e.target.value)}
                         required
@@ -44,7 +47,55 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="apellido" value="Apellidos" />
+
+                    <TextInput
+                        id="apellido"
+                        name="apellido"
+                        value={data.apellido}
+                        className="mt-1 block w-full"
+                        autoComplete="family-name"
+                        onChange={(e) => setData('apellido', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.apellido} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="ci" value="Carnet de Identidad (CI)" />
+
+                    <TextInput
+                        id="ci"
+                        name="ci"
+                        value={data.ci}
+                        className="mt-1 block w-full"
+                        onChange={(e) => setData('ci', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.ci} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="telefono" value="Teléfono" />
+
+                    <TextInput
+                        id="telefono"
+                        type="tel"
+                        name="telefono"
+                        value={data.telefono}
+                        className="mt-1 block w-full"
+                        autoComplete="tel"
+                        onChange={(e) => setData('telefono', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.telefono} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="email" value="Correo Electrónico" />
 
                     <TextInput
                         id="email"
@@ -61,7 +112,7 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4">
-                    <InputLabel htmlFor="password" value="Password" />
+                    <InputLabel htmlFor="password" value="Contraseña" />
 
                     <TextInput
                         id="password"
@@ -80,7 +131,7 @@ export default function Register() {
                 <div className="mt-4">
                     <InputLabel
                         htmlFor="password_confirmation"
-                        value="Confirm Password"
+                        value="Confirmar Contraseña"
                     />
 
                     <TextInput
@@ -107,11 +158,11 @@ export default function Register() {
                         href={route('login')}
                         className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                     >
-                        Already registered?
+                        ¿Ya tienes cuenta?
                     </Link>
 
                     <PrimaryButton className="ms-4" disabled={processing}>
-                        Register
+                        Registrarse
                     </PrimaryButton>
                 </div>
             </form>

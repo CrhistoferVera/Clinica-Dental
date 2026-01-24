@@ -16,6 +16,8 @@ export default function GestionPacientes() {
     const [paginacion, setPaginacion] = useState(null);
     const [modalFichaAbierto, setModalFichaAbierto] = useState(false);
     const [pacienteViendo, setPacienteViendo] = useState(null);
+    const [modalCredenciales, setModalCredenciales] = useState(false);
+    const [credenciales, setCredenciales] = useState(null);
 
     // Cargar pacientes
     const cargarPacientes = async (url = '/patients') => {
@@ -68,9 +70,26 @@ export default function GestionPacientes() {
         setPacienteEditando(null);
     };
 
-    const handleGuardado = () => {
+    const handleGuardado = (result) => {
         cerrarModal();
         cargarPacientes();
+
+        // Si hay credenciales (nuevo paciente), mostrar modal
+        if (result?.credentials) {
+            setCredenciales(result.credentials);
+            setModalCredenciales(true);
+        }
+    };
+
+    const cerrarModalCredenciales = () => {
+        setModalCredenciales(false);
+        setCredenciales(null);
+    };
+
+    const copiarCredenciales = () => {
+        const texto = `Email: ${credenciales.email}\nContraseña: ${credenciales.password}`;
+        navigator.clipboard.writeText(texto);
+        alert('Credenciales copiadas al portapapeles');
     };
 
     const abrirFicha = (paciente) => {
@@ -228,6 +247,64 @@ export default function GestionPacientes() {
                             onEditar={editarDesdeFicha}
                             onCerrar={cerrarFicha}
                         />
+                    </Modal>
+
+                    {/* Modal de credenciales */}
+                    <Modal show={modalCredenciales} onClose={cerrarModalCredenciales} maxWidth="md">
+                        <div className="p-6">
+                            <div className="text-center mb-6">
+                                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-xl font-semibold text-gray-900">
+                                    Paciente Creado Exitosamente
+                                </h3>
+                                <p className="text-gray-600 mt-2">
+                                    Guarde las siguientes credenciales para que el paciente pueda acceder al sistema:
+                                </p>
+                            </div>
+
+                            {credenciales && (
+                                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                    <div className="mb-3">
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">
+                                            Email / Usuario
+                                        </label>
+                                        <div className="bg-white border rounded px-3 py-2 font-mono text-gray-900">
+                                            {credenciales.email}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-500 mb-1">
+                                            Contraseña
+                                        </label>
+                                        <div className="bg-white border rounded px-3 py-2 font-mono text-gray-900">
+                                            {credenciales.password}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={copiarCredenciales}
+                                    className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                                    </svg>
+                                    Copiar Credenciales
+                                </button>
+                                <button
+                                    onClick={cerrarModalCredenciales}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
                     </Modal>
                 </div>
             </div>
