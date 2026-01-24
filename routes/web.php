@@ -9,18 +9,19 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Landing page pública
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+    return Inertia::render('Landing');
+})->name('home');
+
+// Portal del paciente (protegido)
+Route::get('/portal-paciente', function () {
+    return Inertia::render('PortalPaciente');
+})->middleware(['auth', 'role:paciente'])->name('portal-paciente');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'role:admin|recepcion|doctor'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -37,6 +38,14 @@ Route::get('/available-days', [AvailableDaysController::class, 'index']);
 
 // Rutas publicas de appointments
 Route::post('/appointments', [AppointmentController::class, 'store']);
+
+// Rutas de pacientes (solo rol paciente)
+Route::middleware(['auth', 'role:paciente'])->prefix('mis-citas')->group(function () {
+    Route::get('/', [AppointmentController::class, 'misCitas']);
+    Route::get('/pendientes', [AppointmentController::class, 'misCitasPendientes']);
+    Route::patch('/{id}/confirmar', [AppointmentController::class, 'confirmarMiCita']);
+    Route::patch('/{id}/cancelar', [AppointmentController::class, 'cancelarMiCita']);
+});
 
 // Rutas protegidas de appointments (requieren auth + rol)
 Route::middleware(['auth', 'role:admin|recepcion|doctor'])->prefix('appointments')->group(function () {
