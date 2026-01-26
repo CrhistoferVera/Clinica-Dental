@@ -43,6 +43,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Pacientes
                                 </NavLink>
                                 <NavLink
+                                    href={route('gestion-doctores')}
+                                    active={route().current('gestion-doctores')}
+                                >
+                                    Doctores
+                                </NavLink>
+                                <NavLink
                                     href={route('historia-clinica')}
                                     active={route().current('historia-clinica')}
                                 >
@@ -169,6 +175,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('gestion-pacientes')}
                         >
                             Pacientes
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('gestion-doctores')}
+                            active={route().current('gestion-doctores')}
+                        >
+                            Doctores
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('historia-clinica')}
