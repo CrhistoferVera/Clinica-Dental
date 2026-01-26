@@ -91,8 +91,9 @@ Route::middleware(['auth', 'role:admin|recepcion|doctor'])->group(function () {
 Route::delete('/patients/{id}', [PatientController::class, 'destroy'])
     ->middleware(['auth', 'role:admin']);
 
-// Ruta pública para obtener doctores activos (para selección en citas)
+// Rutas públicas para reserva de citas
 Route::get('/doctors/activos', [DoctorController::class, 'activos']);
+Route::get('/especialidades/activas', [DoctorController::class, 'especialidades']);
 
 // Rutas protegidas de doctores (requieren auth + rol admin)
 Route::middleware(['auth', 'role:admin'])->prefix('doctors')->group(function () {

@@ -41,6 +41,7 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'doctor_id' => 'nullable|exists:doctors,id',
             'patient_name' => 'required|string|max:255',
             'patient_lastname' => 'required|string|max:255',
             'patient_dni' => 'required|string|max:255',
@@ -53,15 +54,21 @@ class AppointmentController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        // Verificar si el horario está disponible
-        $existingAppointment = Appointment::where('date', $validated['date'])
+        // Verificar si el horario está disponible para el doctor específico
+        $query = Appointment::where('date', $validated['date'])
             ->where('time_start', $validated['time_start'])
-            ->whereNotIn('status', ['cancelada'])
-            ->first();
+            ->whereNotIn('status', ['cancelada']);
+
+        // Si hay doctor_id, verificar solo para ese doctor
+        if (!empty($validated['doctor_id'])) {
+            $query->where('doctor_id', $validated['doctor_id']);
+        }
+
+        $existingAppointment = $query->first();
 
         if ($existingAppointment) {
             return response()->json([
-                'message' => 'Este horario ya está ocupado'
+                'message' => 'Este horario ya está ocupado para este doctor'
             ], 422);
         }
 
@@ -74,7 +81,7 @@ class AppointmentController extends Controller
 
         return response()->json([
             'message' => 'Cita creada exitosamente',
-            'appointment' => $appointment
+            'appointment' => $appointment->load('doctor')
         ], 201);
     }
 
