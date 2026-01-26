@@ -224,4 +224,86 @@ class AppointmentController extends Controller
             'message' => 'Cita eliminada exitosamente'
         ]);
     }
+
+    /**
+     * Obtener citas del paciente autenticado
+     */
+    public function misCitas()
+    {
+        $userId = auth()->id();
+
+        $appointments = Appointment::where('user_id', $userId)
+            ->orderBy('date', 'desc')
+            ->orderBy('time_start', 'desc')
+            ->get();
+
+        return response()->json($appointments);
+    }
+
+    /**
+     * Obtener citas pendientes del paciente (programadas)
+     */
+    public function misCitasPendientes()
+    {
+        $userId = auth()->id();
+
+        $appointments = Appointment::where('user_id', $userId)
+            ->where('status', 'programada')
+            ->where('date', '>=', now()->toDateString())
+            ->orderBy('date', 'asc')
+            ->orderBy('time_start', 'asc')
+            ->get();
+
+        return response()->json($appointments);
+    }
+
+    /**
+     * Confirmar cita del paciente
+     */
+    public function confirmarMiCita($id)
+    {
+        $userId = auth()->id();
+
+        $appointment = Appointment::where('id', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        if ($appointment->status !== 'programada') {
+            return response()->json([
+                'message' => 'Esta cita no puede ser confirmada'
+            ], 422);
+        }
+
+        $appointment->update(['status' => 'confirmada']);
+
+        return response()->json([
+            'message' => 'Cita confirmada exitosamente',
+            'appointment' => $appointment
+        ]);
+    }
+
+    /**
+     * Cancelar cita del paciente
+     */
+    public function cancelarMiCita($id)
+    {
+        $userId = auth()->id();
+
+        $appointment = Appointment::where('id', $id)
+            ->where('user_id', $userId)
+            ->firstOrFail();
+
+        if (!in_array($appointment->status, ['programada', 'confirmada'])) {
+            return response()->json([
+                'message' => 'Esta cita no puede ser cancelada'
+            ], 422);
+        }
+
+        $appointment->update(['status' => 'cancelada']);
+
+        return response()->json([
+            'message' => 'Cita cancelada exitosamente',
+            'appointment' => $appointment
+        ]);
+    }
 }

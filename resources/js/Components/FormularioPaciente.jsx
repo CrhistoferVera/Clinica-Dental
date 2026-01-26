@@ -76,7 +76,8 @@ export default function FormularioPaciente({ paciente = null, onGuardado, onCanc
                 return;
             }
 
-            onGuardado(result.patient);
+            // Pasar el resultado completo (incluye credentials para nuevos pacientes)
+            onGuardado(result);
         } catch (error) {
             console.error('Error:', error);
             alert('Error de conexión');
@@ -150,7 +151,7 @@ export default function FormularioPaciente({ paciente = null, onGuardado, onCanc
 
                 {/* Email */}
                 <div>
-                    <InputLabel htmlFor="email" value="Email" />
+                    <InputLabel htmlFor="email" value="Email *" />
                     <TextInput
                         id="email"
                         name="email"
@@ -158,7 +159,14 @@ export default function FormularioPaciente({ paciente = null, onGuardado, onCanc
                         value={data.email}
                         onChange={handleChange}
                         className="mt-1 block w-full"
+                        required={!paciente}
+                        disabled={!!paciente}
                     />
+                    {!paciente && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            Este email será usado para el acceso del paciente al sistema
+                        </p>
+                    )}
                     <InputError message={errors.email?.[0]} className="mt-1" />
                 </div>
 

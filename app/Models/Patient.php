@@ -10,6 +10,7 @@ class Patient extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'nombre',
         'apellido',
         'ci',
@@ -26,6 +27,14 @@ class Patient extends Model
     protected $casts = [
         'fecha_nacimiento' => 'date',
     ];
+
+    /**
+     * Usuario asociado al paciente (para login)
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Usuario que creó el registro
