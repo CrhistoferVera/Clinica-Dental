@@ -5,6 +5,7 @@ use App\Http\Controllers\AvailableHoursController;
 use App\Http\Controllers\AvailableDaysController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\DoctorController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -89,6 +90,24 @@ Route::middleware(['auth', 'role:admin|recepcion|doctor'])->group(function () {
 // Eliminar paciente - solo admin
 Route::delete('/patients/{id}', [PatientController::class, 'destroy'])
     ->middleware(['auth', 'role:admin']);
+
+// Ruta pública para obtener doctores activos (para selección en citas)
+Route::get('/doctors/activos', [DoctorController::class, 'activos']);
+
+// Rutas protegidas de doctores (requieren auth + rol admin)
+Route::middleware(['auth', 'role:admin'])->prefix('doctors')->group(function () {
+    Route::get('/', [DoctorController::class, 'index']);
+    Route::post('/', [DoctorController::class, 'store']);
+    Route::get('/especialidades', [DoctorController::class, 'especialidades']);
+    Route::get('/{id}', [DoctorController::class, 'show']);
+    Route::put('/{id}', [DoctorController::class, 'update']);
+    Route::delete('/{id}', [DoctorController::class, 'destroy']);
+});
+
+// Página de gestión de doctores (solo admin)
+Route::get('/gestion-doctores', function () {
+    return Inertia::render('GestionDoctores');
+})->middleware(['auth', 'role:admin'])->name('gestion-doctores');
 
 require __DIR__.'/auth.php';
 

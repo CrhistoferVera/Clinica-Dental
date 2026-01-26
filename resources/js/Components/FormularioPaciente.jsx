@@ -53,34 +53,22 @@ export default function FormularioPaciente({ paciente = null, onGuardado, onCanc
 
         try {
             const url = paciente ? `/patients/${paciente.id}` : '/patients';
-            const method = paciente ? 'PUT' : 'POST';
+            const method = paciente ? 'put' : 'post';
 
-            const response = await fetch(url, {
-                method,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                },
-                body: JSON.stringify(data),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                if (response.status === 422 && result.errors) {
-                    setErrors(result.errors);
-                } else {
-                    alert(result.message || 'Error al guardar');
-                }
-                return;
-            }
+            const response = await window.axios[method](url, data);
 
             // Pasar el resultado completo (incluye credentials para nuevos pacientes)
-            onGuardado(result);
+            onGuardado(response.data);
         } catch (error) {
             console.error('Error:', error);
-            alert('Error de conexión');
+            if (error.response?.status === 422 && error.response?.data?.errors) {
+                setErrors(error.response.data.errors);
+            } else if (error.response?.status === 419) {
+                alert('La sesión ha expirado. Por favor recarga la página.');
+                window.location.reload();
+            } else {
+                alert(error.response?.data?.message || 'Error al guardar');
+            }
         } finally {
             setLoading(false);
         }
