@@ -11,6 +11,7 @@ class Appointment extends Model
 
     protected $fillable = [
         'user_id',
+        'doctor_id',
         'patient_name',
         'patient_lastname',
         'patient_dni',
@@ -31,6 +32,11 @@ class Appointment extends Model
     // Relación con usuario (si está autenticado)
     public function user() {
         return $this->belongsTo(User::class);
+    }
+
+    // Relación con doctor
+    public function doctor() {
+        return $this->belongsTo(Doctor::class);
     }
 
     // Scope para filtrar por estado
