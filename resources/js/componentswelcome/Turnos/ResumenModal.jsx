@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 import { Transition } from "@headlessui/react";
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 
 export default function ResumenModal({ mostrar, onClose, servicio, doctor, fechaLabel, fechaValue, hora }) {
   const { auth } = usePage().props;
@@ -43,41 +44,21 @@ export default function ResumenModal({ mostrar, onClose, servicio, doctor, fecha
 
     try {
       const [horaInicio, horaFin] = hora.split(" - ");
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-      const response = await fetch('/appointments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken,
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          doctor_id: doctor?.id,
-          patient_name: user?.name || '',
-          patient_lastname: user?.apellido || '',
-          patient_dni: user?.ci || '',
-          patient_phone: user?.telefono || '',
-          patient_email: user?.email || '',
-          payment_method: 'Por definir',
-          date: fechaValue,
-          time_start: horaInicio,
-          time_end: horaFin,
-        })
+      const response = await axios.post('/appointments', {
+        doctor_id: doctor?.id,
+        patient_name: user?.name || '',
+        patient_lastname: user?.apellido || '',
+        patient_dni: user?.ci || '',
+        patient_phone: user?.telefono || '',
+        patient_email: user?.email || '',
+        payment_method: 'Por definir',
+        date: fechaValue,
+        time_start: horaInicio,
+        time_end: horaFin,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 419) {
-          throw new Error('La sesión ha expirado. Por favor recarga la página.');
-        }
-        if (response.status === 422 && data.errors) {
-          const errores = Object.values(data.errors).flat();
-          throw new Error(errores.join(', '));
-        }
-        throw new Error(data.message || 'Error al crear la cita');
-      }
+      const data = response.data;
 
       setCitaCreada({
         ...data.appointment,
@@ -89,7 +70,19 @@ export default function ResumenModal({ mostrar, onClose, servicio, doctor, fecha
       setStep('exito');
 
     } catch (err) {
-      setError(err.message || 'Error al crear la cita. Intente nuevamente.');
+      if (err.response) {
+        // Error de respuesta del servidor
+        if (err.response.status === 419) {
+          setError('La sesión ha expirado. Por favor recarga la página.');
+        } else if (err.response.status === 422 && err.response.data?.errors) {
+          const errores = Object.values(err.response.data.errors).flat();
+          setError(errores.join(', '));
+        } else {
+          setError(err.response.data?.message || 'Error al crear la cita');
+        }
+      } else {
+        setError(err.message || 'Error al crear la cita. Intente nuevamente.');
+      }
     } finally {
       setLoading(false);
     }

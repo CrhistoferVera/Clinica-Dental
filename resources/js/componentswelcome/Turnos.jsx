@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import DiasCarousel from "./Turnos/DiasCarousel";
 import Horarios from "./Turnos/Horarios";
 import AgendarButton from "./Turnos/AgendarButton";
@@ -28,11 +29,13 @@ export default function Turnos() {
     // 1. Cargar especialidades y doctores al inicio
     useEffect(() => {
         Promise.all([
-            fetch('/especialidades/activas').then(res => res.json()),
-            fetch('/doctors/activos').then(res => res.json())
-        ]).then(([espData, docData]) => {
-            setEspecialidades(espData);
-            setDoctores(docData);
+            axios.get('/especialidades/activas'),
+            axios.get('/doctors/activos')
+        ]).then(([espRes, docRes]) => {
+            setEspecialidades(espRes.data);
+            setDoctores(docRes.data);
+        }).catch(err => {
+            console.error('Error cargando datos:', err);
         });
     }, []);
 
@@ -59,11 +62,10 @@ export default function Turnos() {
             return;
         }
 
-        fetch('/available-days')
-            .then(res => res.json())
-            .then(data => {
+        axios.get('/available-days')
+            .then(res => {
                 // Filtrar días donde el doctor tiene horario
-                const diasConHorario = data.filter(dia => {
+                const diasConHorario = res.data.filter(dia => {
                     const fecha = new Date(dia.value + 'T12:00:00');
                     const dayOfWeek = fecha.getDay();
                     return doctorSeleccionado.horarios?.some(h => h.day_of_week === dayOfWeek && h.activo);
@@ -72,7 +74,8 @@ export default function Turnos() {
                 if (diasConHorario.length > 0) {
                     setSeleccionDia(diasConHorario[0].value);
                 }
-            });
+            })
+            .catch(err => console.error('Error cargando días:', err));
 
         setSeleccionHora(null);
     }, [doctorSeleccionado]);
@@ -85,12 +88,12 @@ export default function Turnos() {
         }
 
         setLoading(true);
-        fetch(`/available-hours?date=${seleccionDia}&doctor_id=${doctorSeleccionado.id}`)
-            .then(res => res.json())
-            .then(data => {
-                setHorarios(data);
+        axios.get(`/available-hours?date=${seleccionDia}&doctor_id=${doctorSeleccionado.id}`)
+            .then(res => {
+                setHorarios(res.data);
                 setSeleccionHora(null);
             })
+            .catch(err => console.error('Error cargando horarios:', err))
             .finally(() => setLoading(false));
     }, [seleccionDia, doctorSeleccionado]);
 
