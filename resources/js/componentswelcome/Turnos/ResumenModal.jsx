@@ -12,8 +12,29 @@ export default function ResumenModal({ mostrar, onClose, servicio, doctor, fecha
   const [error, setError] = useState("");
 
   const handleConfirmar = async () => {
-    if (!hora || !fechaValue || !doctor) {
-      setError('Faltan datos para crear la cita');
+    // Debug: mostrar qué valores tenemos
+    console.log('Datos para cita:', { hora, fechaValue, doctor, user });
+
+    const camposFaltantes = [];
+    if (!hora) camposFaltantes.push('horario');
+    if (!fechaValue) camposFaltantes.push('fecha');
+    if (!doctor) camposFaltantes.push('doctor');
+
+    if (camposFaltantes.length > 0) {
+      setError(`Faltan datos para crear la cita: ${camposFaltantes.join(', ')}`);
+      return;
+    }
+
+    // Validar datos del usuario
+    const datosUsuarioFaltantes = [];
+    if (!user?.name) datosUsuarioFaltantes.push('nombre');
+    if (!user?.apellido) datosUsuarioFaltantes.push('apellido');
+    if (!user?.ci) datosUsuarioFaltantes.push('CI');
+    if (!user?.telefono) datosUsuarioFaltantes.push('teléfono');
+    if (!user?.email) datosUsuarioFaltantes.push('email');
+
+    if (datosUsuarioFaltantes.length > 0) {
+      setError(`Faltan datos del paciente: ${datosUsuarioFaltantes.join(', ')}. Por favor, completa tu perfil.`);
       return;
     }
 
