@@ -1,53 +1,19 @@
 import { Fragment, useState } from "react";
 import { Transition } from "@headlessui/react";
-import { ArrowLeft } from "lucide-react";
 import { usePage } from '@inertiajs/react';
-import InputField from "./InputField";
 
 export default function ResumenModal({ mostrar, onClose, servicio, doctor, fechaLabel, fechaValue, hora }) {
-  const { props } = usePage();
-  const csrfTokenFromProps = props.csrf_token;
+  const { auth } = usePage().props;
+  const user = auth?.user;
 
-  const [form, setForm] = useState({
-    nombre: "",
-    apellido: "",
-    dni: "",
-    telefono: "",
-    correo: "",
-    metodoPago: "Efectivo",
-  });
-
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [step, setStep] = useState('confirmar'); // 'confirmar' | 'exito'
+  const [citaCreada, setCitaCreada] = useState(null);
+  const [error, setError] = useState("");
 
- // Validaciones
-const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
-
-
-  const soloNumeros = (val) => val.replace(/[^0-9]/g, "");
-
-  const correoValido = (val) => val.replace(/\s/g, ""); // sin espacios
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
-
-  const validarFormulario = () => {
-    if (!form.nombre) return "Ingrese su nombre";
-    if (!form.apellido) return "Ingrese su apellido";
-    if (!form.dni) return "Ingrese su DNI / CI";
-    if (!form.telefono) return "Ingrese su teléfono";
-    if (!form.correo) return "Ingrese su correo";
-    if (!form.correo.includes("@")) return "Correo inválido";
-    return "";
-  };
-
-  const handleFinalizar = async () => {
-    const mensajeError = validarFormulario();
-    if (mensajeError) {
-      setError(mensajeError);
+  const handleConfirmar = async () => {
+    if (!hora || !fechaValue || !doctor) {
+      setError('Faltan datos para crear la cita');
       return;
     }
 
@@ -55,25 +21,8 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
     setError("");
 
     try {
-      // Usar directamente fechaValue que ya viene en formato YYYY-MM-DD
-      const fechaFormateada = fechaValue;
-
-      // Extraer hora de inicio y fin del formato "HH:MM - HH:MM"
       const [horaInicio, horaFin] = hora.split(" - ");
-
-      // Obtener token CSRF de Inertia props o del meta tag
-      const csrfToken = csrfTokenFromProps || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-      if (!csrfToken) {
-        throw new Error('Token CSRF no encontrado. Por favor recarga la página.');
-      }
-
-      console.log('Datos a enviar:', {
-        fecha: fechaFormateada,
-        horaInicio,
-        horaFin,
-        csrfToken: csrfToken.substring(0, 10) + '...'
-      }); // Debug
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
       const response = await fetch('/appointments', {
         method: 'POST',
@@ -84,30 +33,24 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
         },
         body: JSON.stringify({
           doctor_id: doctor?.id,
-          patient_name: form.nombre,
-          patient_lastname: form.apellido,
-          patient_dni: form.dni,
-          patient_phone: form.telefono,
-          patient_email: form.correo,
-          payment_method: form.metodoPago,
-          date: fechaFormateada,
+          patient_name: user?.name || '',
+          patient_lastname: user?.apellido || '',
+          patient_dni: user?.ci || '',
+          patient_phone: user?.telefono || '',
+          patient_email: user?.email || '',
+          payment_method: 'Por definir',
+          date: fechaValue,
           time_start: horaInicio,
           time_end: horaFin,
         })
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
+      const data = await response.json();
+
+      if (!response.ok) {
         if (response.status === 419) {
           throw new Error('La sesión ha expirado. Por favor recarga la página.');
         }
-        throw new Error('Error al procesar la respuesta del servidor.');
-      }
-
-      if (!response.ok) {
-        // Manejar errores de validación (422)
         if (response.status === 422 && data.errors) {
           const errores = Object.values(data.errors).flat();
           throw new Error(errores.join(', '));
@@ -115,26 +58,29 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
         throw new Error(data.message || 'Error al crear la cita');
       }
 
-      setSuccess(true);
-      setTimeout(() => {
-        setForm({
-          nombre: "",
-          apellido: "",
-          dni: "",
-          telefono: "",
-          correo: "",
-          metodoPago: "Efectivo",
-        });
-        setSuccess(false);
-        onClose();
-        // Opcional: Recargar horarios disponibles
-        window.location.reload();
-      }, 2000);
+      setCitaCreada({
+        ...data.appointment,
+        doctorNombre: `Dr. ${doctor?.nombre} ${doctor?.apellido}`,
+        especialidad: servicio,
+        fechaLabel: fechaLabel,
+        hora: hora
+      });
+      setStep('exito');
 
     } catch (err) {
       setError(err.message || 'Error al crear la cita. Intente nuevamente.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCerrar = () => {
+    setStep('confirmar');
+    setCitaCreada(null);
+    setError("");
+    onClose();
+    if (step === 'exito') {
+      window.location.reload();
     }
   };
 
@@ -145,93 +91,191 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
         as={Fragment}
         enter="transition-opacity duration-300"
         enterFrom="opacity-0"
-        enterTo="opacity-50"
+        enterTo="opacity-100"
         leave="transition-opacity duration-300"
-        leaveFrom="opacity-50"
+        leaveFrom="opacity-100"
         leaveTo="opacity-0"
       >
-        <div onClick={onClose} className="fixed inset-0 bg-black z-40" style={{ opacity: 0.5 }} />
+        <div className="fixed inset-0 bg-black/50 z-40" onClick={step === 'confirmar' ? handleCerrar : undefined} />
       </Transition.Child>
 
-      {/* Panel */}
+      {/* Modal centrado */}
       <Transition.Child
         as={Fragment}
-        enter="transform transition duration-300"
-        enterFrom="translate-x-full"
-        enterTo="translate-x-0"
-        leave="transform transition duration-300"
-        leaveFrom="translate-x-0"
-        leaveTo="translate-x-full"
+        enter="transition-all duration-300"
+        enterFrom="opacity-0 scale-95"
+        enterTo="opacity-100 scale-100"
+        leave="transition-all duration-200"
+        leaveFrom="opacity-100 scale-100"
+        leaveTo="opacity-0 scale-95"
       >
-        <div className="fixed top-0 right-0 h-full z-50 bg-white shadow-lg w-full md:w-96 flex flex-col overflow-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
 
-          {/* Cabecera */}
-          <div className="bg-black text-white flex items-center p-4">
-            <button onClick={onClose} className="mr-4">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <h2 className="text-lg font-bold text-center flex-1">Reservar Turno</h2>
-          </div>
+            {step === 'confirmar' ? (
+              <>
+                {/* Header */}
+                <div className="bg-cyan-600 text-white p-6 text-center">
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h2 className="text-xl font-bold">Confirmar Cita</h2>
+                  <p className="text-cyan-100 text-sm mt-1">Revisa los datos antes de confirmar</p>
+                </div>
 
-          {/* Contenido */}
-          <div className="p-6 flex-1 flex flex-col gap-4">
-            {/* Resumen */}
-            <div className="bg-gray-100 p-4 rounded-lg space-y-1">
-              <p><strong>Especialidad:</strong> {servicio}</p>
-              {doctor && (
-                <p><strong>Doctor:</strong> Dr. {doctor.nombre} {doctor.apellido}</p>
-              )}
-              <p><strong>Fecha:</strong> {fechaLabel}</p>
-              <p><strong>Hora:</strong> {hora}</p>
-            </div>
+                {/* Contenido */}
+                <div className="p-6">
+                  {/* Datos de la cita */}
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="bg-cyan-100 text-cyan-600 rounded-full p-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Especialidad</p>
+                        <p className="font-medium text-gray-800">{servicio}</p>
+                      </div>
+                    </div>
 
-            {/* Formulario */}
-            <div className="flex flex-col gap-3">
-              <InputField label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} validation={soloLetras} maxLength={30} />
-              <InputField label="Apellido" name="apellido" value={form.apellido} onChange={handleChange} validation={soloLetras} maxLength={30} />
-              <InputField label="DNI / CI" name="dni" value={form.dni} onChange={handleChange} validation={soloNumeros} maxLength={15} />
-              <InputField label="Teléfono / WhatsApp" name="telefono" value={form.telefono} onChange={handleChange} validation={soloNumeros} maxLength={15} />
-              <InputField label="Correo" name="correo" value={form.correo} onChange={handleChange} type="email" validation={correoValido} maxLength={50} />
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="bg-cyan-100 text-cyan-600 rounded-full p-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Doctor</p>
+                        <p className="font-medium text-gray-800">Dr. {doctor?.nombre} {doctor?.apellido}</p>
+                      </div>
+                    </div>
 
-              <div className="relative w-full">
-                <select
-                  name="metodoPago"
-                  value={form.metodoPago}
-                  onChange={handleChange}
-                  className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <option>Efectivo</option>
-                  <option>Transferencia Bancaria</option>
-                  <option>QR</option>
-                </select>
-                <label className="absolute left-3 -top-2 text-gray-500 bg-white px-1 text-sm">Método de pago</label>
-              </div>
-            </div>
-          </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="bg-cyan-100 text-cyan-600 rounded-full p-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Fecha y Hora</p>
+                        <p className="font-medium text-gray-800 capitalize">{fechaLabel}</p>
+                        <p className="text-cyan-600 font-semibold">{hora}</p>
+                      </div>
+                    </div>
 
-          {/* Mensaje de error */}
-          {error && (
-            <div className="p-4 bg-red-100 text-red-700 font-semibold rounded-lg mx-6 -mt-2 mb-2">
-              {error}
-            </div>
-          )}
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className="bg-cyan-100 text-cyan-600 rounded-full p-2">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Paciente</p>
+                        <p className="font-medium text-gray-800">{user?.name} {user?.apellido}</p>
+                        <p className="text-sm text-gray-500">{user?.email}</p>
+                      </div>
+                    </div>
+                  </div>
 
-          {/* Mensaje de éxito */}
-          {success && (
-            <div className="p-4 bg-green-100 text-green-700 font-semibold rounded-lg mx-6 -mt-2 mb-2">
-              ¡Cita agendada exitosamente!
-            </div>
-          )}
+                  {/* Error */}
+                  {error && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                      {error}
+                    </div>
+                  )}
 
-          {/* Botón finalizar */}
-          <div className="p-6 border-t">
-            <button
-              onClick={handleFinalizar}
-              disabled={loading || success}
-              className="w-full bg-black text-white py-3 rounded-full font-semibold hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Guardando...' : success ? '¡Listo!' : 'Finalizar'}
-            </button>
+                  {/* Botones */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleCerrar}
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={handleConfirmar}
+                      disabled={loading}
+                      className="flex-1 px-4 py-3 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    >
+                      {loading ? 'Reservando...' : 'Confirmar Cita'}
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Modal de Éxito */}
+                <div className="p-6 text-center">
+                  {/* Icono de éxito */}
+                  <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">¡Cita Reservada!</h2>
+                  <p className="text-gray-600 mb-6">Tu cita ha sido registrada exitosamente</p>
+
+                  {/* Resumen de la cita */}
+                  <div className="bg-gray-50 rounded-xl p-4 text-left mb-6">
+                    <h3 className="font-semibold text-gray-800 mb-3 text-center">Detalles de tu cita</h3>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Especialidad:</span>
+                        <span className="font-medium">{citaCreada?.especialidad}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Doctor:</span>
+                        <span className="font-medium">{citaCreada?.doctorNombre}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Fecha:</span>
+                        <span className="font-medium capitalize">{citaCreada?.fechaLabel}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Hora:</span>
+                        <span className="font-medium text-cyan-600">{citaCreada?.hora}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Estado:</span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Pendiente de confirmar
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Alerta importante */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="bg-amber-100 rounded-full p-1.5 mt-0.5">
+                        <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-semibold text-amber-800 text-sm">Importante</p>
+                        <p className="text-amber-700 text-sm mt-1">
+                          Debes confirmar tu cita <strong>24 horas antes</strong> desde la sección "Confirmar Citas" en tu portal.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botón cerrar */}
+                  <button
+                    onClick={handleCerrar}
+                    className="w-full px-4 py-3 bg-cyan-600 text-white rounded-xl font-medium hover:bg-cyan-700 transition-colors"
+                  >
+                    Entendido
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </Transition.Child>
