@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { usePage } from '@inertiajs/react';
 import InputField from "./InputField";
 
-export default function ResumenModal({ mostrar, onClose, servicio, fechaLabel, fechaValue, hora }) {
+export default function ResumenModal({ mostrar, onClose, servicio, doctor, fechaLabel, fechaValue, hora }) {
   const { props } = usePage();
   const csrfTokenFromProps = props.csrf_token;
 
@@ -83,6 +83,7 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
           'Accept': 'application/json'
         },
         body: JSON.stringify({
+          doctor_id: doctor?.id,
           patient_name: form.nombre,
           patient_lastname: form.apellido,
           patient_dni: form.dni,
@@ -175,8 +176,11 @@ const soloLetras = (val) => val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, 
           {/* Contenido */}
           <div className="p-6 flex-1 flex flex-col gap-4">
             {/* Resumen */}
-            <div className="bg-gray-100 p-4 rounded-lg">
-              <p><strong>Servicio:</strong> {servicio}</p>
+            <div className="bg-gray-100 p-4 rounded-lg space-y-1">
+              <p><strong>Especialidad:</strong> {servicio}</p>
+              {doctor && (
+                <p><strong>Doctor:</strong> Dr. {doctor.nombre} {doctor.apellido}</p>
+              )}
               <p><strong>Fecha:</strong> {fechaLabel}</p>
               <p><strong>Hora:</strong> {hora}</p>
             </div>

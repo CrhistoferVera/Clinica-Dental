@@ -33,13 +33,19 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
+        // Redirección según el rol del usuario
+        $user = $request->user();
+
+        if ($user->hasRole('doctor')) {
+            return redirect()->intended('/doctor/panel');
+        }
 
         if ($user->hasRole('paciente')) {
             return redirect()->intended('/portal-paciente');
         }
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Admin y recepción van al dashboard
+        return redirect()->intended(route('dashboard'));
     }
 
     /**
