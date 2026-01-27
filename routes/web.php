@@ -6,6 +6,7 @@ use App\Http\Controllers\AvailableDaysController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\DoctorController;
+use App\Http\Controllers\DoctorPanelController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -109,6 +110,36 @@ Route::middleware(['auth', 'role:admin'])->prefix('doctors')->group(function () 
 Route::get('/gestion-doctores', function () {
     return Inertia::render('GestionDoctores');
 })->middleware(['auth', 'role:admin'])->name('gestion-doctores');
+
+// ================================================
+// RUTAS DEL PANEL DEL DOCTOR
+// ================================================
+Route::middleware(['auth', 'role:doctor|admin'])->prefix('doctor')->group(function () {
+    // Vista principal del panel
+    Route::get('/panel', [DoctorPanelController::class, 'index'])->name('panel-doctor');
+
+    // Vista para atender paciente
+    Route::get('/atender/{appointmentId}', [DoctorPanelController::class, 'atenderCita'])->name('doctor.atender');
+
+    // API: Citas del doctor
+    Route::get('/api/citas-hoy', [DoctorPanelController::class, 'citasHoy']);
+    Route::get('/api/citas', [DoctorPanelController::class, 'citasPorFecha']);
+
+    // API: Guardar atención
+    Route::post('/api/atencion', [DoctorPanelController::class, 'guardarAtencion']);
+
+    // API: Marcar no asistió
+    Route::patch('/api/cita/{appointmentId}/no-asistio', [DoctorPanelController::class, 'marcarNoAsistio']);
+
+    // API: Historial del paciente
+    Route::get('/api/paciente/{patientId}/historial', [DoctorPanelController::class, 'historialPaciente']);
+
+    // API: Buscar pacientes
+    Route::get('/api/pacientes/buscar', [DoctorPanelController::class, 'buscarPacientes']);
+
+    // API: Receta rápida (sin cita)
+    Route::post('/api/receta-rapida', [DoctorPanelController::class, 'crearRecetaRapida']);
+});
 
 require __DIR__.'/auth.php';
 
