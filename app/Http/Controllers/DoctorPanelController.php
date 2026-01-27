@@ -92,7 +92,7 @@ class DoctorPanelController extends Controller
             return redirect()->route('dashboard')->with('error', 'No autorizado');
         }
 
-        $cita = Appointment::with('patient')->findOrFail($appointmentId);
+        $cita = Appointment::findOrFail($appointmentId);
 
         // Verificar que la cita pertenece a este doctor
         if ($cita->doctor_id !== $doctor->id) {
