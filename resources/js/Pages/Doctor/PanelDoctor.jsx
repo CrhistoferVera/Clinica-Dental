@@ -71,14 +71,19 @@ export default function PanelDoctor({ doctor }) {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
                 },
             });
             if (response.ok) {
                 cargarCitas();
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Error al marcar como no asistió');
             }
         } catch (error) {
             console.error('Error:', error);
+            alert('Error de conexión');
         }
     };
 

@@ -217,11 +217,12 @@ class DoctorPanelController extends Controller
             return response()->json(['error' => 'Esta cita no te pertenece'], 403);
         }
 
-        $cita->update(['status' => 'no_asistio']);
+        $cita->status = 'no_asistio';
+        $cita->save();
 
         return response()->json([
             'message' => 'Cita marcada como no asistió',
-            'appointment' => $cita,
+            'appointment' => $cita->fresh(),
         ]);
     }
 

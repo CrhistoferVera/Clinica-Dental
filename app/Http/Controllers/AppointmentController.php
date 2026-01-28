@@ -77,6 +77,21 @@ class AppointmentController extends Controller
             $validated['user_id'] = auth()->id();
         }
 
+        // Determinar el estado inicial basado en los días de anticipación
+        // Si la cita es para hoy o mañana → confirmada automáticamente
+        // Si la cita es para 2 días o más → programada (requiere confirmación)
+        $fechaCita = Carbon::parse($validated['date']);
+        $hoy = Carbon::today();
+        $diasDeAnticipacion = $hoy->diffInDays($fechaCita, false);
+
+        if ($diasDeAnticipacion <= 1) {
+            // Cita para hoy o mañana: confirmada automáticamente
+            $validated['status'] = 'confirmada';
+        } else {
+            // Cita para 2 días o más: requiere confirmación un día antes
+            $validated['status'] = 'programada';
+        }
+
         $appointment = Appointment::create($validated);
 
         return response()->json([
