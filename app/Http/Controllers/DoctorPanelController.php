@@ -141,6 +141,8 @@ class DoctorPanelController extends Controller
             'observaciones' => 'nullable|string',
             'proxima_cita_sugerida' => 'nullable|string|max:100',
             'generar_receta' => 'boolean',
+            'odontograma' => 'nullable|array',
+            'plan_tratamiento' => 'nullable|array',
             'medicamentos' => 'nullable|array',
             'medicamentos.*.medicamento' => 'required_with:medicamentos|string',
             'medicamentos.*.dosis' => 'nullable|string',
@@ -161,6 +163,8 @@ class DoctorPanelController extends Controller
             'tratamiento' => $validated['tratamiento'],
             'observaciones' => $validated['observaciones'] ?? null,
             'proxima_cita_sugerida' => $validated['proxima_cita_sugerida'] ?? null,
+            'odontograma' => $validated['odontograma'] ?? null,
+            'plan_tratamiento' => $validated['plan_tratamiento'] ?? null,
         ]);
 
         // Si hay cita asociada, marcarla como atendida

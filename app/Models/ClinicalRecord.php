@@ -20,10 +20,14 @@ class ClinicalRecord extends Model
         'tratamiento',
         'observaciones',
         'proxima_cita_sugerida',
+        'odontograma',
+        'plan_tratamiento',
     ];
 
     protected $casts = [
         'fecha' => 'date',
+        'odontograma' => 'array',
+        'plan_tratamiento' => 'array',
     ];
 
     public function appointment()

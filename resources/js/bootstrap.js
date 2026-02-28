@@ -22,12 +22,22 @@ window.axios.interceptors.request.use(config => {
 
 // Interceptor para manejar errores 419 (CSRF token mismatch)
 window.axios.interceptors.response.use(
-    response => response,
+    response => {
+        // Limpiar flag de recarga en requests exitosos
+        sessionStorage.removeItem('_csrf_reload');
+        return response;
+    },
     error => {
         if (error.response?.status === 419) {
-            // Token expirado - recargar página para obtener nuevo token
-            console.warn('CSRF token expirado, recargando página...');
-            window.location.reload();
+            const yaRecargo = sessionStorage.getItem('_csrf_reload');
+            if (!yaRecargo) {
+                // Primera vez: recargar para obtener token fresco
+                sessionStorage.setItem('_csrf_reload', '1');
+                window.location.reload();
+            } else {
+                // Ya se recargó y sigue fallando: limpiar flag y dejar que el componente maneje el error
+                sessionStorage.removeItem('_csrf_reload');
+            }
         }
         return Promise.reject(error);
     }
